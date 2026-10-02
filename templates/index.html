@@ -1,12 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Мой первый сайт</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
     <h1>Привет, {{ name }}!</h1>
     <p>Это мой первый сайт на Flask с шаблоном.</p>
     <p>Сегодня: {{ date }}</p>
-</body>
-</html>
+{% endblock %}
