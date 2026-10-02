@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Мой сайт{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="/">Главная</a> |
+        <a href="/about">Обо мне</a>
+    </nav>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>
