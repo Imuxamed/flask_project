@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Спасибо!{% endblock %}
+
+{% block content %}
+    <h1>Спасибо, {{ name }}!</h1>
+    <p>Ваше сообщение получено:</p>
+    <blockquote>{{ message }}</blockquote>
+    <p><a href="/contact">← Отправить ещё одно</a></p>
+{% endblock %}

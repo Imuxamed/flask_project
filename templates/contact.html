@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Свяжитесь со мной{% endblock %}
+
+{% block content %}
+    <h1>Свяжитесь со мной</h1>
+    <form method="POST">
+        <p>
+            <label>Ваше имя:</label><br>
+            <input type="text" name="name" required>
+        </p>
+        <p>
+            <label>Сообщение:</label><br>
+            <textarea name="message" rows="5" cols="40" required></textarea>
+        </p>
+        <p>
+            <button type="submit">Отправить</button>
+        </p>
+    </form>
+{% endblock %}
