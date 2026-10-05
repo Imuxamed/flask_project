@@ -168,6 +168,53 @@ def change_password():
             return redirect(url_for('change_password'))
 
     return render_template('change_password.html')
+    # ========== ЗАБЫЛИ ПАРОЛЬ ==========
+import secrets
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+
+        if user:
+            token = secrets.token_hex(8)
+            conn.execute("UPDATE users SET reset_token = ? WHERE id = ?", (token, user['id']))
+            conn.commit()
+            conn.close()
+            flash(f"Ваш токен для сброса: {token}", "success")
+            return redirect(url_for('reset_password'))
+        else:
+            conn.close()
+            flash("Пользователь с таким email не найден.", "error")
+            return redirect(url_for('forgot_password'))
+
+    return render_template('forgot_password.html')
+
+# ========== СБРОС ПАРОЛЯ ==========
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        token = request.form['token']
+        new_password = request.form['new_password']
+
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE reset_token = ?", (token,)).fetchone()
+
+        if user:
+            new_hash = generate_password_hash(new_password)
+            conn.execute("UPDATE users SET password_hash = ?, reset_token = NULL WHERE id = ?",
+                         (new_hash, user['id']))
+            conn.commit()
+            conn.close()
+            flash("Пароль успешно сброшен! Теперь войдите.", "success")
+            return redirect(url_for('login'))
+        else:
+            conn.close()
+            flash("Неверный токен.", "error")
+            return redirect(url_for('reset_password'))
+
+    return render_template('reset_password.html')
 if __name__ == '__main__':
     app.run(debug=True)
