@@ -1,4 +1,4 @@
-  {% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Все сообщения{% endblock %}
 
@@ -21,11 +21,13 @@
                     <p>{{ msg['message'] }}</p>
                 </div>
 
-                <a href="/delete/{{ msg['id'] }}"
-                   class="delete-btn"
-                   onclick="return confirm('Удалить это сообщение?');">
-                   ✖
-                </a>
+                {% if msg['can_delete'] %}
+                    <a href="/delete/{{ msg['id'] }}"
+                       class="delete-btn"
+                       onclick="return confirm('Удалить это сообщение?');">
+                       ✖
+                    </a>
+                {% endif %}
             </div>
         {% endfor %}
     {% else %}

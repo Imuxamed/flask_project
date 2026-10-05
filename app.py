@@ -75,20 +75,58 @@ def messages():
         ORDER BY messages.id DESC
     """).fetchall()
     count = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+
+    # Загружаем текущего пользователя (если вошёл)
+    current_user = None
+    if 'user_id' in session:
+        current_user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+
     conn.close()
 
-    # Превращаем каждую строку в словарь с отформатированной датой
     formatted = []
     for row in rows:
+        # Кто может удалять?
+        can_delete = False
+        if current_user:
+            if current_user['is_admin'] == 1 or current_user['username'] == row['name']:
+                can_delete = True
+
         formatted.append({
             'id': row['id'],
             'name': row['name'],
             'message': row['message'],
             'created_at': format_time(row['created_at']),
-            'avatar': row['avatar']
+            'avatar': row['avatar'],
+            'can_delete': can_delete
         })
 
-    return render_template('messages.html', messages=formatted, count=count)
+    return render_template('messages.html', messages=formatted, count=count)                                                               # ========== УДАЛЕНИЕ СООБЩЕНИЯ ==========
+@app.route('/delete/<int:msg_id>')
+def delete_message(msg_id):
+    if 'user_id' not in session:
+        flash("Войдите, чтобы удалять сообщения.", "error")
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    msg = conn.execute("SELECT * FROM messages WHERE id = ?", (msg_id,)).fetchone()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+
+    if not msg:
+        conn.close()
+        flash("Сообщение не найдено.", "error")
+        return redirect(url_for('messages'))
+
+    # Может удалить, если админ или это его сообщение
+    if user['is_admin'] == 1 or msg['name'] == user['username']:
+        conn.execute("DELETE FROM messages WHERE id = ?", (msg_id,))
+        conn.commit()
+        conn.close()
+        flash("Сообщение удалено.", "success")
+    else:
+        conn.close()
+        flash("Вы можете удалять только свои сообщения.", "error")
+
+    return redirect(url_for('messages'))
 # ========== РЕГИСТРАЦИЯ ==========
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -252,7 +290,7 @@ def reset_password():
             flash("Неверный токен.", "error")
             return redirect(url_for('reset_password'))
 
-    return render_template('reset_password.html')  # ========== ЗАГРУЗКА АВАТАРКИ ==========
+    return render_template('reset_password.html')                          # ========== ЗАГРУЗКА АВАТАРКИ ==========
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'user_id' not in session:
