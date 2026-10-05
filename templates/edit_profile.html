@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать профиль{% endblock %}
+
+{% block content %}
+    <h1>Редактировать профиль</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+        <p>
+            <label>Имя пользователя:</label><br>
+            <input type="text" name="username" value="{{ user['username'] }}" required>
+        </p>
+        <p>
+            <label>Email:</label><br>
+            <input type="email" name="email" value="{{ user['email'] }}" required>
+        </p>
+        <p>
+            <button type="submit">Сохранить</button>
+        </p>
+    </form>
+
+    <p><a href="/change_password">Сменить пароль</a></p>
+    <p><a href="/profile">← Назад в профиль</a></p>
+{% endblock %}

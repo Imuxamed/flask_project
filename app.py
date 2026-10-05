@@ -111,6 +111,63 @@ def logout():
     session.clear()
     flash("Вы вышли из системы.", "success")
     return redirect(url_for('home'))
+# ========== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ==========
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' not in session:
+        flash("Сначала войдите в систему.", "error")
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+
+    if request.method == 'POST':
+        new_username = request.form['username']
+        new_email = request.form['email']
+
+        try:
+            conn.execute("UPDATE users SET username = ?, email = ? WHERE id = ?",
+                         (new_username, new_email, session['user_id']))
+            conn.commit()
+            session['username'] = new_username  # обновляем сессию
+            flash("Профиль обновлён!", "success")
+        except sqlite3.IntegrityError:
+            flash("Это имя или email уже заняты.", "error")
+
+        conn.close()
+        return redirect(url_for('profile'))
+
+    conn.close()
+    return render_template('edit_profile.html', user=user)
+
+# ========== СМЕНА ПАРОЛЯ ==========
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    if 'user_id' not in session:
+        flash("Сначала войдите в систему.", "error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+
+        conn = get_db()
+        user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+
+        if user and check_password_hash(user['password_hash'], old_password):
+            new_hash = generate_password_hash(new_password)
+            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                         (new_hash, session['user_id']))
+            conn.commit()
+            conn.close()
+            flash("Пароль успешно изменён!", "success")
+            return redirect(url_for('profile'))
+        else:
+            conn.close()
+            flash("Старый пароль неверный.", "error")
+            return redirect(url_for('change_password'))
+
+    return render_template('change_password.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

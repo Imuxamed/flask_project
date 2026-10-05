@@ -4,6 +4,11 @@
 
 {% block content %}
     <h1>Привет, {{ username }}!</h1>
-    <p>Это твой личный кабинет. Здесь будет информация только для тебя.</p>
-    <p><a href="/logout">Выйти</a></p>
+    <p>Это твой личный кабинет.</p>
+
+    <p>
+        <a href="/edit_profile">Редактировать профиль</a> |
+        <a href="/change_password">Сменить пароль</a> |
+        <a href="/logout">Выйти</a>
+    </p>
 {% endblock %}
