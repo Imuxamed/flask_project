@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+    <h1>Привет, {{ username }}!</h1>
+    <p>Это твой личный кабинет. Здесь будет информация только для тебя.</p>
+    <p><a href="/logout">Выйти</a></p>
+{% endblock %}
