@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Все сообщения{% endblock %}
+
+{% block content %}
+    <h1>Гостевая книга</h1>
+    {% if messages %}
+        {% for msg in messages %}
+            <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>{{ msg['name'] }}</strong>
+                    <small style="color:#888;"> — {{ msg['created_at'] }}</small>
+                    <p style="margin:5px 0 0 0;">{{ msg['message'] }}</p>
+                </div>
+                <a href="/delete/{{ msg['id'] }}"
+                   style="color:#c0392b; text-decoration:none; font-size:20px; padding:5px 10px;"
+                   onclick="return confirm('Удалить это сообщение?');">
+                   ✖
+                </a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Пока сообщений нет. <a href="/contact">Оставьте первое!</a></p>
+    {% endif %}
+    <p><a href="/contact">← Оставить сообщение</a></p>
+{% endblock %}
