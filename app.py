@@ -4,7 +4,30 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+def format_time(timestamp):
+    """Превращает '2026-10-05 14:30:00' в '5 минут назад'."""
+    try:
+        dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+    except:
+        return timestamp
 
+    now = datetime.now()
+    diff = now - dt
+    seconds = diff.total_seconds()
+
+    if seconds < 60:
+        return "только что"
+    elif seconds < 3600:
+        minutes = int(seconds // 60)
+        return f"{minutes} мин. назад"
+    elif seconds < 86400:
+        hours = int(seconds // 3600)
+        return f"{hours} ч. назад"
+    elif seconds < 604800:
+        days = int(seconds // 86400)
+        return f"{days} дн. назад"
+    else:
+        return dt.strftime("%d.%m.%Y")
 app = Flask(__name__)
 app.secret_key = "секретный_ключ_123"
 UPLOAD_FOLDER = 'static/avatars'
@@ -51,21 +74,21 @@ def messages():
         LEFT JOIN users ON messages.name = users.username
         ORDER BY messages.id DESC
     """).fetchall()
+    count = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
     conn.close()
-    return render_template('messages.html', messages=rows)
 
+    # Превращаем каждую строку в словарь с отформатированной датой
+    formatted = []
+    for row in rows:
+        formatted.append({
+            'id': row['id'],
+            'name': row['name'],
+            'message': row['message'],
+            'created_at': format_time(row['created_at']),
+            'avatar': row['avatar']
+        })
 
-@app.route('/delete/<int:msg_id>')
-def delete_message(msg_id):
-    if 'user_id' not in session:
-        flash("Войдите, чтобы удалять сообщения.", "error")
-        return redirect(url_for('login'))
-    conn = get_db()
-    conn.execute("DELETE FROM messages WHERE id = ?", (msg_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('messages'))
-
+    return render_template('messages.html', messages=formatted, count=count)
 # ========== РЕГИСТРАЦИЯ ==========
 @app.route('/register', methods=['GET', 'POST'])
 def register():

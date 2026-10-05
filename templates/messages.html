@@ -1,35 +1,28 @@
-   {% extends "base.html" %}
+  {% extends "base.html" %}
 
 {% block title %}Все сообщения{% endblock %}
 
 {% block content %}
     <h1>Гостевая книга</h1>
+    <p style="color:#888;">Всего сообщений: <strong>{{ count }}</strong></p>
 
     {% if messages %}
         {% for msg in messages %}
-            <div style="border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px; display:flex; gap:15px; align-items:flex-start;">
-
-                {# --- Аватарка --- #}
+            <div class="msg-card">
                 {% if msg['avatar'] %}
-                    <img src="{{ url_for('static', filename='avatars/' + msg['avatar']) }}"
-                         alt="Аватар"
-                         style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #2c3e50;">
+                    <img src="{{ url_for('static', filename='avatars/' + msg['avatar']) }}" alt="Аватар" class="avatar">
                 {% else %}
-                    <img src="{{ url_for('static', filename='avatars/default.png') }}"
-                         alt="Аватар"
-                         style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #ccc;">
+                    <img src="{{ url_for('static', filename='avatars/default.png') }}" alt="Аватар" class="avatar">
                 {% endif %}
 
-                {# --- Текст сообщения --- #}
-                <div style="flex:1;">
+                <div class="msg-body">
                     <strong>{{ msg['name'] }}</strong>
                     <small style="color:#888;"> — {{ msg['created_at'] }}</small>
-                    <p style="margin:5px 0 0 0;">{{ msg['message'] }}</p>
+                    <p>{{ msg['message'] }}</p>
                 </div>
 
-                {# --- Кнопка удаления --- #}
                 <a href="/delete/{{ msg['id'] }}"
-                   style="color:#c0392b; text-decoration:none; font-size:20px; padding:5px 10px;"
+                   class="delete-btn"
                    onclick="return confirm('Удалить это сообщение?');">
                    ✖
                 </a>

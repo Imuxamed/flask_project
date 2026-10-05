@@ -37,4 +37,54 @@ p {
 hr {
     border: 1px solid #ccc;
     margin: 20px 0;
+}/* Карточка сообщения */
+.msg-card {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.msg-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* Аватарка */
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #2c3e50;
+    flex-shrink: 0;
+}
+
+/* Тело сообщения */
+.msg-body {
+    flex: 1;
+}
+
+.msg-body p {
+    margin: 5px 0 0 0;
+    color: #333;
+}
+
+/* Кнопка удаления */
+.delete-btn {
+    color: #c0392b;
+    text-decoration: none;
+    font-size: 20px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.delete-btn:hover {
+    background: #ffe6e6;
 }
