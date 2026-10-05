@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+import os
+from werkzeug.utils import secure_filename
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "секретный_ключ_123"
+UPLOAD_FOLDER = 'static/avatars'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 DB = "messages.db"
 
 def get_db():
@@ -103,7 +107,11 @@ def profile():
     if 'user_id' not in session:
         flash("Сначала войдите в систему.", "error")
         return redirect(url_for('login'))
-    return render_template('profile.html', username=session['username'])
+
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+    conn.close()
+    return render_template('profile.html', username=session['username'], user=user)
 
 # ========== ВЫХОД ==========
 @app.route('/logout')
@@ -215,6 +223,27 @@ def reset_password():
             flash("Неверный токен.", "error")
             return redirect(url_for('reset_password'))
 
-    return render_template('reset_password.html')
+    return render_template('reset_password.html')  # ========== ЗАГРУЗКА АВАТАРКИ ==========
+@app.route('/upload_avatar', methods=['POST'])
+def upload_avatar():
+    if 'user_id' not in session:
+        flash("Сначала войдите в систему.", "error")
+        return redirect(url_for('login'))
+
+    file = request.files['avatar']
+    if file and file.filename:
+        filename = secure_filename(file.filename)
+        # Добавляем user_id, чтобы имена не повторялись
+        filename = f"user_{session['user_id']}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        conn = get_db()
+        conn.execute("UPDATE users SET avatar = ? WHERE id = ?", (filename, session['user_id']))
+        conn.commit()
+        conn.close()
+        flash("Аватарка загружена!", "success")
+
+    return redirect(url_for('profile'))
 if __name__ == '__main__':
     app.run(debug=True)

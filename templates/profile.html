@@ -4,7 +4,30 @@
 
 {% block content %}
     <h1>Привет, {{ username }}!</h1>
-    <p>Это твой личный кабинет.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endwith %}
+
+    <div style="display:flex; align-items:center; gap:20px;">
+        <img src="{{ url_for('static', filename='avatars/' + user['avatar']) }}"
+             alt="Аватар"
+             style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #2c3e50;">
+
+        <form method="POST" action="/upload_avatar" enctype="multipart/form-data">
+            <p>
+                <label>Загрузить аватарку:</label><br>
+                <input type="file" name="avatar" accept="image/*" required>
+            </p>
+            <p>
+                <button type="submit">Загрузить</button>
+            </p>
+        </form>
+    </div>
 
     <p>
         <a href="/edit_profile">Редактировать профиль</a> |
