@@ -41,13 +41,19 @@ def contact():
         conn.close()
         return redirect(url_for('messages'))
     return render_template('contact.html')
-
 @app.route('/messages')
 def messages():
     conn = get_db()
-    rows = conn.execute("SELECT * FROM messages ORDER BY id DESC").fetchall()
+    rows = conn.execute("""
+        SELECT messages.id, messages.name, messages.message, messages.created_at,
+               users.avatar
+        FROM messages
+        LEFT JOIN users ON messages.name = users.username
+        ORDER BY messages.id DESC
+    """).fetchall()
     conn.close()
     return render_template('messages.html', messages=rows)
+
 
 @app.route('/delete/<int:msg_id>')
 def delete_message(msg_id):
