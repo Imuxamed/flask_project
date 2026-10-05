@@ -6,12 +6,19 @@
 </head>
 <body>
     <nav>
-        <a href="/">Главная</a> |
-        <a href="/about">Обо мне</a> | <a href="/contact">Связаться</a> | <a href="/messages">Гостевая</a>
-
-    |
- <a href="/register">Регистрация</a> |
- <a href="/login">Вход</a> </nav>
+     
+    <a href="/">Главная</a> |
+    <a href="/about">Обо мне</a> |
+    <a href="/contact">Связаться</a> |
+    <a href="/messages">Гостевая</a> |
+    {% if session.user_id %}
+        | <a href="/profile">Привет, {{ session.username }}!</a> |
+        <a href="/logout">Выйти</a>
+    {% else %}
+        | <a href="/register">Регистрация</a> |
+        <a href="/login">Вход</a>
+    {% endif %}
+ </nav>
     <hr>
     {% block content %}{% endblock %}
 </body>
