@@ -6,7 +6,6 @@
 </head>
 <body>
     <nav>
-     
     <a href="/">Главная</a> |
     <a href="/about">Обо мне</a> |
     <a href="/contact">Связаться</a> |
@@ -17,7 +16,8 @@
     {% else %}
         | <a href="/register">Регистрация</a> |
         <a href="/login">Вход</a>
-    {% endif %}
+    {% endif %} 
+    
  </nav>
     <hr>
     {% block content %}{% endblock %}

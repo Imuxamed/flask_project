@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = "секретный_ключ_123"  # нужен для сессий
+app.secret_key = "секретный_ключ_123"
 DB = "messages.db"
 
 def get_db():
@@ -21,11 +21,16 @@ def home():
 def about():
     return render_template('about.html')
 
+# ========== ГОСТЕВАЯ ==========
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    if 'user_id' not in session:
+        flash("Сначала войдите, чтобы оставить сообщение.", "error")
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
-        name = request.form['name']
         message = request.form['message']
+        name = session['username']
         conn = get_db()
         conn.execute("INSERT INTO messages (name, message) VALUES (?, ?)", (name, message))
         conn.commit()
@@ -42,6 +47,9 @@ def messages():
 
 @app.route('/delete/<int:msg_id>')
 def delete_message(msg_id):
+    if 'user_id' not in session:
+        flash("Войдите, чтобы удалять сообщения.", "error")
+        return redirect(url_for('login'))
     conn = get_db()
     conn.execute("DELETE FROM messages WHERE id = ?", (msg_id,))
     conn.commit()
@@ -55,10 +63,7 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-
-        # Хешируем пароль
         password_hash = generate_password_hash(password)
-
         conn = get_db()
         try:
             conn.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
@@ -71,7 +76,6 @@ def register():
             conn.close()
             flash("Пользователь с таким именем или email уже существует.", "error")
             return redirect(url_for('register'))
-
     return render_template('register.html')
 
 # ========== ВХОД ==========
@@ -80,11 +84,9 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         conn = get_db()
         user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
         conn.close()
-
         if user and check_password_hash(user['password_hash'], password):
             session['user_id'] = user['id']
             session['username'] = user['username']
@@ -93,10 +95,9 @@ def login():
         else:
             flash("Неверное имя или пароль.", "error")
             return redirect(url_for('login'))
-
     return render_template('login.html')
 
-# ========== ЛИЧНЫЙ КАБИНЕТ ==========
+# ========== ПРОФИЛЬ ==========
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
