@@ -19,6 +19,36 @@
                     <strong>{{ msg['name'] }}</strong>
                     <small style="color:#888;"> — {{ msg['created_at'] }}</small>
                     <p>{{ msg['message'] }}</p>
+
+                    {# --- Комментарии --- #}
+                    {% if msg['comments'] %}
+                        <div class="comments-block">
+                            {% for c in msg['comments'] %}
+                                <div class="comment">
+                                    {% if c['avatar'] %}
+                                        <img src="{{ url_for('static', filename='avatars/' + c['avatar']) }}" alt="Аватар" class="comment-avatar">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='avatars/default.png') }}" alt="Аватар" class="comment-avatar">
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ c['username'] }}</strong>
+                                        <small style="color:#888;"> — {{ c['created_at'] }}</small>
+                                        <p>{{ c['text'] }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {# --- Форма для комментария --- #}
+                    {% if session.user_id %}
+                        <form method="POST" action="/add_comment/{{ msg['id'] }}" class="comment-form">
+                            <input type="text" name="text" placeholder="Написать комментарий..." required>
+                            <button type="submit">Ответить</button>
+                        </form>
+                    {% else %}
+                        <p style="color:#888; font-size:14px;"><a href="/login">Войдите</a>, чтобы оставить комментарий.</p>
+                    {% endif %}
                 </div>
 
                 {% if msg['can_delete'] %}

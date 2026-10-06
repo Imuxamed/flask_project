@@ -87,4 +87,59 @@ hr {
 
 .delete-btn:hover {
     background: #ffe6e6;
+}                                                                          /* Комментарии */
+.comments-block {
+    margin-top: 10px;
+    padding-left: 15px;
+    border-left: 3px solid #ddd;
+}
+
+.comment {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+}
+
+.comment-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    flex-shrink: 0;
+}
+
+.comment p {
+    margin: 3px 0 0 0;
+    font-size: 14px;
+}
+
+/* Форма комментария */
+.comment-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.comment-form input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.comment-form button {
+    padding: 8px 15px;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.comment-form button:hover {
+    background: #f39c12;
 }

@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
+import secrets
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
+
 def format_time(timestamp):
     """Превращает '2026-10-05 14:30:00' в '5 минут назад'."""
     try:
@@ -28,6 +30,7 @@ def format_time(timestamp):
         return f"{days} дн. назад"
     else:
         return dt.strftime("%d.%m.%Y")
+
 app = Flask(__name__)
 app.secret_key = "секретный_ключ_123"
 UPLOAD_FOLDER = 'static/avatars'
@@ -64,6 +67,7 @@ def contact():
         conn.close()
         return redirect(url_for('messages'))
     return render_template('contact.html')
+
 @app.route('/messages')
 def messages():
     conn = get_db()
@@ -76,16 +80,20 @@ def messages():
     """).fetchall()
     count = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
 
-    # Загружаем текущего пользователя (если вошёл)
     current_user = None
     if 'user_id' in session:
         current_user = conn.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],)).fetchone()
 
-    conn.close()
-
     formatted = []
     for row in rows:
-        # Кто может удалять?
+        comments = conn.execute("""
+            SELECT comments.*, users.avatar
+            FROM comments
+            LEFT JOIN users ON comments.username = users.username
+            WHERE comments.message_id = ?
+            ORDER BY comments.id ASC
+        """, (row['id'],)).fetchall()
+
         can_delete = False
         if current_user:
             if current_user['is_admin'] == 1 or current_user['username'] == row['name']:
@@ -97,10 +105,14 @@ def messages():
             'message': row['message'],
             'created_at': format_time(row['created_at']),
             'avatar': row['avatar'],
-            'can_delete': can_delete
+            'can_delete': can_delete,
+            'comments': comments
         })
 
-    return render_template('messages.html', messages=formatted, count=count)                                                               # ========== УДАЛЕНИЕ СООБЩЕНИЯ ==========
+    conn.close()
+    return render_template('messages.html', messages=formatted, count=count)
+
+# ========== УДАЛЕНИЕ СООБЩЕНИЯ ==========
 @app.route('/delete/<int:msg_id>')
 def delete_message(msg_id):
     if 'user_id' not in session:
@@ -116,7 +128,6 @@ def delete_message(msg_id):
         flash("Сообщение не найдено.", "error")
         return redirect(url_for('messages'))
 
-    # Может удалить, если админ или это его сообщение
     if user['is_admin'] == 1 or msg['name'] == user['username']:
         conn.execute("DELETE FROM messages WHERE id = ?", (msg_id,))
         conn.commit()
@@ -127,6 +138,24 @@ def delete_message(msg_id):
         flash("Вы можете удалять только свои сообщения.", "error")
 
     return redirect(url_for('messages'))
+
+# ========== ДОБАВЛЕНИЕ КОММЕНТАРИЯ ==========
+@app.route('/add_comment/<int:msg_id>', methods=['POST'])
+def add_comment(msg_id):
+    if 'user_id' not in session:
+        flash("Войдите, чтобы оставить комментарий.", "error")
+        return redirect(url_for('login'))
+
+    text = request.form['text']
+    if text.strip():
+        conn = get_db()
+        conn.execute("INSERT INTO comments (message_id, username, text) VALUES (?, ?, ?)",
+                     (msg_id, session['username'], text))
+        conn.commit()
+        conn.close()
+        flash("Комментарий добавлен!", "success")
+    return redirect(url_for('messages'))
+
 # ========== РЕГИСТРАЦИЯ ==========
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -186,6 +215,7 @@ def logout():
     session.clear()
     flash("Вы вышли из системы.", "success")
     return redirect(url_for('home'))
+
 # ========== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ==========
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
@@ -204,7 +234,7 @@ def edit_profile():
             conn.execute("UPDATE users SET username = ?, email = ? WHERE id = ?",
                          (new_username, new_email, session['user_id']))
             conn.commit()
-            session['username'] = new_username  # обновляем сессию
+            session['username'] = new_username
             flash("Профиль обновлён!", "success")
         except sqlite3.IntegrityError:
             flash("Это имя или email уже заняты.", "error")
@@ -243,9 +273,8 @@ def change_password():
             return redirect(url_for('change_password'))
 
     return render_template('change_password.html')
-    # ========== ЗАБЫЛИ ПАРОЛЬ ==========
-import secrets
 
+# ========== ЗАБЫЛИ ПАРОЛЬ ==========
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -290,7 +319,9 @@ def reset_password():
             flash("Неверный токен.", "error")
             return redirect(url_for('reset_password'))
 
-    return render_template('reset_password.html')                          # ========== ЗАГРУЗКА АВАТАРКИ ==========
+    return render_template('reset_password.html')
+
+# ========== ЗАГРУЗКА АВАТАРКИ ==========
 @app.route('/upload_avatar', methods=['POST'])
 def upload_avatar():
     if 'user_id' not in session:
@@ -300,7 +331,6 @@ def upload_avatar():
     file = request.files['avatar']
     if file and file.filename:
         filename = secure_filename(file.filename)
-        # Добавляем user_id, чтобы имена не повторялись
         filename = f"user_{session['user_id']}_{filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
@@ -312,5 +342,7 @@ def upload_avatar():
         flash("Аватарка загружена!", "success")
 
     return redirect(url_for('profile'))
+
+# ========== ЗАПУСК ==========
 if __name__ == '__main__':
     app.run(debug=True)
