@@ -60,6 +60,23 @@
                 {% endif %}
             </div>
         {% endfor %}
+
+        {# --- Навигация по страницам --- #}
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="/messages?page={{ page - 1 }}">← Назад</a>
+            {% else %}
+                <span class="disabled">← Назад</span>
+            {% endif %}
+
+            <span>Страница {{ page }} из {{ total_pages }}</span>
+
+            {% if page < total_pages %}
+                <a href="/messages?page={{ page + 1 }}">Вперёд →</a>
+            {% else %}
+                <span class="disabled">Вперёд →</span>
+            {% endif %}
+        </div>
     {% else %}
         <p>Пока сообщений нет. <a href="/contact">Оставьте первое!</a></p>
     {% endif %}

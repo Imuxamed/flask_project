@@ -67,18 +67,40 @@ def contact():
         conn.close()
         return redirect(url_for('messages'))
     return render_template('contact.html')
-
 @app.route('/messages')
 def messages():
+    # Сколько сообщений показывать на странице
+    PER_PAGE = 5
+
+    # Номер текущей страницы (по умолчанию 1)
+    page = request.args.get('page', 1, type=int)
+    if page < 1:
+        page = 1
+
     conn = get_db()
+
+    # Общее количество сообщений
+    total = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+
+    # Сколько всего страниц
+    total_pages = (total + PER_PAGE - 1) // PER_PAGE
+    if total_pages < 1:
+        total_pages = 1
+    if page > total_pages:
+        page = total_pages
+
+    # Смещение: сколько сообщений пропустить
+    offset = (page - 1) * PER_PAGE
+
+    # Загружаем ТОЛЬКО нужные сообщения
     rows = conn.execute("""
         SELECT messages.id, messages.name, messages.message, messages.created_at,
                users.avatar
         FROM messages
         LEFT JOIN users ON messages.name = users.username
         ORDER BY messages.id DESC
-    """).fetchall()
-    count = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+        LIMIT ? OFFSET ?
+    """, (PER_PAGE, offset)).fetchall()
 
     current_user = None
     if 'user_id' in session:
@@ -110,7 +132,11 @@ def messages():
         })
 
     conn.close()
-    return render_template('messages.html', messages=formatted, count=count)
+    return render_template('messages.html',
+                           messages=formatted,
+                           count=total,
+                           page=page,
+                           total_pages=total_pages)
 
 # ========== УДАЛЕНИЕ СООБЩЕНИЯ ==========
 @app.route('/delete/<int:msg_id>')
